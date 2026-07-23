@@ -129,16 +129,19 @@ export const ChatModal: React.FC<ChatModalProps> = ({
         >
           {/* ヘッダー */}
           <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900">
-            <div className="flex items-center space-x-2">
-              <MessageCircle className="w-5 h-5 text-pink-500" />
-              <h2 className="text-base font-black text-slate-800 dark:text-white">メッセージ一覧</h2>
+            <div className="flex items-center space-x-2.5">
+              <button
+                onClick={onClose}
+                title="閉じる"
+                className="p-1.5 text-slate-400 hover:text-pink-500 hover:bg-pink-50 dark:hover:bg-slate-800 rounded-full transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              <div className="flex items-center space-x-2">
+                <MessageCircle className="w-5 h-5 text-pink-500" />
+                <h2 className="text-base font-black text-slate-800 dark:text-white">メッセージ一覧</h2>
+              </div>
             </div>
-            <button
-              onClick={onClose}
-              className="md:hidden text-slate-400 hover:text-slate-600 p-1"
-            >
-              <X className="w-5 h-5" />
-            </button>
           </div>
 
           {/* 消滅に関する注記 */}

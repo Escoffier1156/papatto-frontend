@@ -35,7 +35,7 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="absolute -bottom-1 left-0 w-full h-1 bg-gradient-to-r from-pink-400 via-purple-400 to-rose-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
           <p className="text-xs sm:text-sm font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent mt-0.5 tracking-wide">
-            ポップなテキストでぱぱっと会えるマッチングサイト
+            ぱぱっと会えるマッチングサイト
           </p>
         </div>
 

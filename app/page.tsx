@@ -189,7 +189,7 @@ export default function Home() {
       {/* フッター */}
       <footer className="mt-12 bg-white/60 dark:bg-slate-900/60 border-t border-slate-100 dark:border-slate-800 py-6 text-center text-xs text-slate-400 font-medium">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p>© 2026 ぱぱっと (Papatto) - ポップなテキストでぱぱっと会えるマッチングサイト</p>
+          <p>© 2026 ぱぱっと (Papatto) - ぱぱっと会えるマッチングサイト</p>
           <div className="flex items-center space-x-4">
             <span className="hover:underline cursor-pointer">利用規約</span>
             <span className="hover:underline cursor-pointer">プライバシーポリシー</span>

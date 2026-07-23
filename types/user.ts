@@ -10,6 +10,7 @@ export type MBTIType =
 
 export interface UserProfile {
   id: string;
+  userCode: string; // ユニークな個人識別番号 (例: #PPT-8492-1049)
   nickname: string;
   avatar: string;
   age: number;
@@ -24,7 +25,6 @@ export interface UserProfile {
   bio: string;
   tags: string[];
   isOnline: boolean;
-  phoneNumber?: string;
   registeredAt?: string;
 }
 

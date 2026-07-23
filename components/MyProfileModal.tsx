@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { UserProfile, BodyType, BloodType, MBTIType } from '@/types/user';
 import { PREFECTURES } from '@/data/mockUsers';
-import { X, UserCheck, Heart, Save, Phone } from 'lucide-react';
+import { X, Heart, Save, IdCard, Copy, Check } from 'lucide-react';
 
 interface MyProfileModalProps {
   isOpen: boolean;
@@ -27,6 +27,7 @@ export const MyProfileModal: React.FC<MyProfileModalProps> = ({
   const [prefecture, setPrefecture] = useState(currentUser.prefecture);
   const [hasAdultOption, setHasAdultOption] = useState(currentUser.hasAdultOption);
   const [bio, setBio] = useState(currentUser.bio);
+  const [copied, setCopied] = useState(false);
 
   if (!isOpen) return null;
 
@@ -46,6 +47,12 @@ export const MyProfileModal: React.FC<MyProfileModalProps> = ({
     };
     onUpdateProfile(updated);
     onClose();
+  };
+
+  const copyCode = () => {
+    navigator.clipboard.writeText(currentUser.userCode);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
@@ -69,15 +76,34 @@ export const MyProfileModal: React.FC<MyProfileModalProps> = ({
             />
             <div>
               <h2 className="text-lg font-bold">マイプロフィール設定</h2>
-              <p className="text-xs text-pink-100 flex items-center gap-1">
-                <Phone className="w-3 h-3" /> 認証済み番号: {currentUser.phoneNumber || 'SMS認証済'}
-              </p>
+              <div className="flex items-center space-x-1.5 mt-0.5">
+                <IdCard className="w-3.5 h-3.5 text-pink-200" />
+                <span className="text-xs font-mono font-bold text-pink-100">{currentUser.userCode}</span>
+                <button
+                  onClick={copyCode}
+                  className="p-1 hover:bg-white/20 rounded transition"
+                >
+                  {copied ? <Check className="w-3 h-3 text-emerald-300" /> : <Copy className="w-3 h-3 text-white/80" />}
+                </button>
+              </div>
             </div>
           </div>
         </div>
 
         {/* 編集フォーム */}
         <form onSubmit={handleSave} className="p-5 overflow-y-auto space-y-4 flex-1 text-xs">
+          
+          {/* 個人番号確認エリア */}
+          <div className="p-3 bg-purple-50 dark:bg-purple-950/40 rounded-xl border border-purple-200 dark:border-purple-800/60 flex items-center justify-between">
+            <div>
+              <span className="font-bold text-purple-700 dark:text-purple-300">個人識別番号 (ユーザーID)</span>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400">重複防止用にシステムから自動発行された番号です</p>
+            </div>
+            <span className="font-mono font-black text-sm text-purple-600 dark:text-purple-300 bg-white dark:bg-slate-900 px-2.5 py-1 rounded-lg border border-purple-200">
+              {currentUser.userCode}
+            </span>
+          </div>
+
           <div>
             <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">ニックネーム</label>
             <input

@@ -8,7 +8,7 @@ import { SearchFilter } from '@/components/SearchFilter';
 import { UserProfileCard } from '@/components/UserProfileCard';
 import { RegistrationModal } from '@/components/RegistrationModal';
 import { MyProfileModal } from '@/components/MyProfileModal';
-import { Sparkles, Heart, PhoneCall, ShieldCheck, Users, SearchX } from 'lucide-react';
+import { Sparkles, UserPlus, Users, SearchX } from 'lucide-react';
 
 const INITIAL_FILTER: SearchFilterState = {
   ageMin: 18,
@@ -43,10 +43,9 @@ export default function Home() {
     }
   }, []);
 
-  // 会員登録完了時のハンドラー
+  // プロフィール作成完了時
   const handleRegisterComplete = (newProfile: UserProfile) => {
     setCurrentUser(newProfile);
-    // ユーザー一覧の先頭に自分を追加
     setUsers((prev) => [newProfile, ...prev]);
     try {
       localStorage.setItem('papatto_user', JSON.stringify(newProfile));
@@ -69,37 +68,22 @@ export default function Home() {
   // フィルター処理
   const filteredUsers = useMemo(() => {
     return users.filter((u) => {
-      // 年齢範囲
       if (u.age < filter.ageMin || u.age > filter.ageMax) return false;
-
-      // 身長
       if (u.height < filter.heightMin) return false;
+      if (filter.bodyTypes.length > 0 && !filter.bodyTypes.includes(u.bodyType)) return false;
+      if (filter.prefecture !== '指定なし' && u.prefecture !== filter.prefecture) return false;
+      if (filter.hasAdultOptionOnly && !u.hasAdultOption) return false;
 
-      // 体型
-      if (filter.bodyTypes.length > 0 && !filter.bodyTypes.includes(u.bodyType)) {
-        return false;
-      }
-
-      // 地域
-      if (filter.prefecture !== '指定なし' && u.prefecture !== filter.prefecture) {
-        return false;
-      }
-
-      // 大人ありフラグ
-      if (filter.hasAdultOptionOnly && !u.hasAdultOption) {
-        return false;
-      }
-
-      // キーワード（ニックネーム, 趣味, MBTI, 職業）
       if (filter.keyword.trim()) {
         const kw = filter.keyword.toLowerCase();
         const matchNickname = u.nickname.toLowerCase().includes(kw);
         const matchBio = u.bio.toLowerCase().includes(kw);
         const matchMbti = u.mbti.toLowerCase().includes(kw);
         const matchOcc = u.occupation.toLowerCase().includes(kw);
+        const matchCode = u.userCode.toLowerCase().includes(kw);
         const matchTag = u.tags.some((t) => t.toLowerCase().includes(kw));
 
-        if (!matchNickname && !matchBio && !matchMbti && !matchOcc && !matchTag) {
+        if (!matchNickname && !matchBio && !matchMbti && !matchOcc && !matchCode && !matchTag) {
           return false;
         }
       }
@@ -127,13 +111,13 @@ export default function Home() {
             <div className="relative z-10 max-w-2xl space-y-3">
               <div className="inline-flex items-center space-x-1.5 bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-extrabold">
                 <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
-                <span>電話番号だけで1分で登録完了！</span>
+                <span>面倒な登録なし！個人識別番号が自動発行されます</span>
               </div>
               <h2 className="text-2xl sm:text-3xl font-black leading-tight tracking-tight">
                 「ぱぱっと」会いたい人と、すぐに出会えるマッチングサービス
               </h2>
               <p className="text-xs sm:text-sm text-pink-100 font-medium">
-                面倒な入力は不要！SMS認証とプロフィール（血液型・MBTI・体型・身長・大人あり）を登録して今すぐ気になる人にオファーを送りましょう。
+                面倒なSMS・メール等の認証は一切なし！プロフィール（血液型・MBTI・体型・身長・大人あり）を登録するだけで固有の個人識別番号が割り振られ、すぐにスタートできます。
               </p>
               
               <div className="pt-2">
@@ -141,13 +125,12 @@ export default function Home() {
                   onClick={() => setIsRegisterOpen(true)}
                   className="bg-white text-pink-600 hover:bg-pink-50 font-black text-sm px-6 py-3 rounded-full shadow-lg transition transform hover:scale-105 active:scale-95 flex items-center gap-2"
                 >
-                  <PhoneCall className="w-4 h-4 text-pink-500" />
-                  <span>今すぐ電話番号で無料登録する</span>
+                  <UserPlus className="w-4 h-4 text-pink-500" />
+                  <span>今すぐプロフィールを作成 (無料)</span>
                 </button>
               </div>
             </div>
 
-            {/* 背景装飾 */}
             <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-white/10 rounded-full blur-2xl pointer-events-none" />
           </div>
         )}
@@ -179,9 +162,6 @@ export default function Home() {
                 <UserProfileCard
                   key={u.id}
                   user={u}
-                  onSendLike={(likedUser) => {
-                    // いいね送信時の演出や通知
-                  }}
                 />
               ))}
             </div>
@@ -218,7 +198,7 @@ export default function Home() {
         </div>
       </footer>
 
-      {/* 5. 電話番号登録モーダル */}
+      {/* 5. プロフィール作成モーダル */}
       <RegistrationModal
         isOpen={isRegisterOpen}
         onClose={() => setIsRegisterOpen(false)}

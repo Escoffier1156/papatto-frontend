@@ -4,8 +4,7 @@ import React, { useState } from 'react';
 import { UserProfile, BodyType, BloodType, MBTIType } from '@/types/user';
 import { PREFECTURES } from '@/data/mockUsers';
 import { 
-  X, Phone, MessageSquareCode, CheckCircle2, 
-  Sparkles, Camera, ArrowRight, ShieldCheck, Heart 
+  X, CheckCircle2, Sparkles, Heart, IdCard, Copy, Check
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -30,20 +29,23 @@ const PRESET_AVATARS = [
   'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=600&q=80'
 ];
 
+// 個人識別番号（重複防止用のユニークID）生成関数
+function generateUserCode(): string {
+  const rand1 = Math.floor(1000 + Math.random() * 9000);
+  const rand2 = Math.floor(1000 + Math.random() * 9000);
+  return `#PPT-${rand1}-${rand2}`;
+}
+
 export const RegistrationModal: React.FC<RegistrationModalProps> = ({
   isOpen,
   onClose,
   onRegisterComplete,
 }) => {
-  const [step, setStep] = useState<1 | 2 | 3>(1);
-  
-  // Step 1 State: 電話番号 & SMS
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [smsSent, setSmsSent] = useState(false);
-  const [verificationCode, setVerificationCode] = useState('');
-  const [smsError, setSmsError] = useState('');
+  const [isCompleted, setIsCompleted] = useState(false);
+  const [createdUserCode, setCreatedUserCode] = useState('');
+  const [copied, setCopied] = useState(false);
 
-  // Step 2 State: プロフィール情報
+  // プロフィール情報 State
   const [nickname, setNickname] = useState('');
   const [avatar, setAvatar] = useState(PRESET_AVATARS[0]);
   const [customAvatarUrl, setCustomAvatarUrl] = useState('');
@@ -60,29 +62,7 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
 
   if (!isOpen) return null;
 
-  // Step 1: SMSコード送信処理
-  const handleSendSms = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!phoneNumber || phoneNumber.length < 10) {
-      setSmsError('正しい電話番号を入力してください（例: 090-1234-5678）');
-      return;
-    }
-    setSmsError('');
-    setSmsSent(true);
-  };
-
-  // Step 1: SMS検証処理
-  const handleVerifySms = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!verificationCode || verificationCode.length < 4) {
-      setSmsError('認証コード（任意の4〜6桁）を入力してください');
-      return;
-    }
-    setSmsError('');
-    setStep(2); // プロフィール設定へ
-  };
-
-  // Step 2: プロフィール登録完了処理
+  // プロフィール登録完了処理 (即時個人番号発行)
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
     if (!nickname.trim()) {
@@ -91,9 +71,12 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
     }
 
     const finalAvatar = customAvatarUrl.trim() ? customAvatarUrl : avatar;
+    const userCode = generateUserCode();
+    setCreatedUserCode(userCode);
 
     const newProfile: UserProfile = {
-      id: `user-my-${Date.now()}`,
+      id: `user-${Date.now()}`,
+      userCode,
       nickname,
       avatar: finalAvatar,
       age,
@@ -108,23 +91,27 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
       bio,
       tags: ['新規会員', 'ぱぱっと募集', prefecture],
       isOnline: true,
-      phoneNumber,
       registeredAt: new Date().toLocaleDateString('ja-JP'),
     };
 
-    // Confetti アニメーション演出
     try {
       confetti({
-        particleCount: 100,
-        spread: 70,
+        particleCount: 120,
+        spread: 80,
         origin: { y: 0.6 }
       });
     } catch {
       // ignore
     }
 
-    setStep(3);
+    setIsCompleted(true);
     onRegisterComplete(newProfile);
+  };
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(createdUserCode);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
@@ -142,118 +129,18 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
           
           <div className="flex items-center space-x-2">
             <Sparkles className="w-6 h-6 animate-pulse" />
-            <h2 className="text-xl font-bold">「ぱぱっと」無料会員登録</h2>
+            <h2 className="text-xl font-bold">「ぱぱっと」プロフィール作成</h2>
           </div>
           <p className="text-xs text-pink-100 mt-1">
-            ステップ {step} / 3: {step === 1 ? '電話番号で本人確認' : step === 2 ? 'プロフィール入力' : '登録完了'}
+            {isCompleted ? '発行完了！個人番号を保存してください' : '本人確認不要！項目を入力すると独自の「個人番号」が自動発行されます'}
           </p>
-
-          {/* ステップインジケーター */}
-          <div className="w-full bg-white/20 h-1.5 rounded-full mt-3 overflow-hidden">
-            <div 
-              className="bg-white h-full transition-all duration-300 rounded-full"
-              style={{ width: `${(step / 3) * 100}%` }}
-            />
-          </div>
         </div>
 
-        {/* モーダルコンテンツ（スクロール可能） */}
+        {/* モーダルコンテンツ */}
         <div className="p-6 overflow-y-auto flex-1 space-y-6">
           
-          {/* STEP 1: 電話番号 ＆ SMSコード入力 */}
-          {step === 1 && (
-            <div className="space-y-6">
-              <div className="text-center space-y-2">
-                <div className="w-14 h-14 bg-pink-100 dark:bg-pink-950/60 text-pink-500 rounded-2xl flex items-center justify-center mx-auto shadow-inner">
-                  <Phone className="w-7 h-7" />
-                </div>
-                <h3 className="text-lg font-bold text-slate-800 dark:text-white">
-                  SMS（ショートメッセージ）本人確認
-                </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  安全にご利用いただくため、電話番号にSMSで登録リンクと認証コードを送信します。
-                </p>
-              </div>
-
-              {!smsSent ? (
-                <form onSubmit={handleSendSms} className="space-y-4">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                      携帯電話番号
-                    </label>
-                    <div className="relative">
-                      <Phone className="w-5 h-5 absolute left-3 top-3 text-slate-400" />
-                      <input
-                        type="tel"
-                        placeholder="090-1234-5678"
-                        value={phoneNumber}
-                        onChange={(e) => setPhoneNumber(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-pink-500 outline-none text-sm font-semibold"
-                      />
-                    </div>
-                  </div>
-
-                  {smsError && <p className="text-xs text-red-500 font-bold">{smsError}</p>}
-
-                  <button
-                    type="submit"
-                    className="w-full py-3 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-bold text-sm rounded-xl shadow-lg shadow-pink-500/25 transition flex items-center justify-center gap-2"
-                  >
-                    <span>SMSで登録リンクを送信</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
-                </form>
-              ) : (
-                <form onSubmit={handleVerifySms} className="space-y-4 animate-fadeIn">
-                  <div className="p-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl text-xs text-emerald-700 dark:text-emerald-300 flex items-start gap-2">
-                    <ShieldCheck className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
-                    <div>
-                      <p className="font-bold">【疑似SMS受信メッセージ】</p>
-                      <p className="mt-0.5">「ぱぱっと登録リンクです。認証コード【8888】を入力してプロフィールを登録してください。」</p>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                      認証コード (任意の4〜6桁)
-                    </label>
-                    <div className="relative">
-                      <MessageSquareCode className="w-5 h-5 absolute left-3 top-3 text-slate-400" />
-                      <input
-                        type="text"
-                        placeholder="例: 8888"
-                        value={verificationCode}
-                        onChange={(e) => setVerificationCode(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-pink-500 outline-none text-sm font-bold tracking-widest text-center"
-                      />
-                    </div>
-                  </div>
-
-                  {smsError && <p className="text-xs text-red-500 font-bold">{smsError}</p>}
-
-                  <div className="flex items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setSmsSent(false)}
-                      className="px-4 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold text-xs rounded-xl"
-                    >
-                      やり直す
-                    </button>
-                    <button
-                      type="submit"
-                      className="flex-1 py-3 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-bold text-sm rounded-xl shadow-lg shadow-pink-500/25 transition flex items-center justify-center gap-2"
-                    >
-                      <span>プロフィール登録へ開く</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </button>
-                  </div>
-                </form>
-              )}
-            </div>
-          )}
-
-          {/* STEP 2: プロフィール登録フォーム */}
-          {step === 2 && (
+          {!isCompleted ? (
+            /* プロフィール入力フォーム */
             <form onSubmit={handleSaveProfile} className="space-y-5 animate-fadeIn">
               
               {/* プロフィール画像登録 */}
@@ -458,7 +345,7 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
                 </div>
               </div>
 
-              {/* 「大人あり」スイッチ & 自己紹介 */}
+              {/* 「大人あり」スイッチ */}
               <div className="p-3 bg-pink-50/70 dark:bg-pink-950/30 border border-pink-200/80 dark:border-pink-800 rounded-xl flex items-center justify-between">
                 <div>
                   <span className="text-xs font-bold text-pink-700 dark:text-pink-300 flex items-center gap-1">
@@ -497,23 +384,44 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
                 className="w-full py-3.5 bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 hover:opacity-95 text-white font-extrabold text-sm rounded-xl shadow-lg shadow-pink-500/30 transition transform hover:scale-[1.01] active:scale-95 flex items-center justify-center gap-2"
               >
                 <CheckCircle2 className="w-5 h-5" />
-                <span>プロフィールを登録して「ぱぱっと」を始める</span>
+                <span>個人番号を発行して「ぱぱっと」を始める</span>
               </button>
             </form>
-          )}
-
-          {/* STEP 3: 完了感謝メッセージ */}
-          {step === 3 && (
-            <div className="text-center py-6 space-y-4 animate-fadeIn">
+          ) : (
+            /* 個人番号発行 完了画面 */
+            <div className="text-center py-6 space-y-5 animate-fadeIn">
               <div className="w-20 h-20 bg-gradient-to-br from-pink-400 to-purple-600 text-white rounded-full flex items-center justify-center mx-auto shadow-xl animate-bounce">
-                <CheckCircle2 className="w-10 h-10" />
+                <IdCard className="w-10 h-10" />
               </div>
-              <h3 className="text-2xl font-black text-slate-800 dark:text-white">
-                登録が完了しました！🎉
-              </h3>
-              <p className="text-xs text-slate-600 dark:text-slate-300 max-w-sm mx-auto">
-                「ぱぱっと」へようこそ！気になる相手を探して即時マッチングやメッセージを送ってみましょう。
-              </p>
+              
+              <div>
+                <h3 className="text-2xl font-black text-slate-800 dark:text-white">
+                  個人識別番号を発行しました！🎉
+                </h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  重複登録を防止するため、あなた専用の識別IDが割り当てられました。
+                </p>
+              </div>
+
+              {/* 個人番号カード表示 */}
+              <div className="max-w-md mx-auto bg-gradient-to-r from-pink-50 to-purple-50 dark:from-slate-800 dark:to-slate-800/80 p-4 rounded-2xl border border-pink-200 dark:border-slate-700 shadow-inner space-y-2">
+                <span className="text-[10px] text-pink-600 dark:text-pink-300 font-bold uppercase tracking-wider">
+                  あなたの「ぱぱっと」個人識別番号
+                </span>
+                
+                <div className="flex items-center justify-center space-x-3 bg-white dark:bg-slate-900 py-3 px-4 rounded-xl border border-pink-300/80 shadow-sm">
+                  <span className="text-xl font-black font-mono tracking-wider text-pink-600 dark:text-pink-400">
+                    {createdUserCode}
+                  </span>
+                  <button
+                    onClick={copyToClipboard}
+                    className="p-1.5 bg-pink-100 dark:bg-pink-950/60 text-pink-600 dark:text-pink-300 rounded-lg hover:bg-pink-200 transition"
+                  >
+                    {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+                  </button>
+                </div>
+                {copied && <p className="text-[10px] text-emerald-600 font-bold">番号をクリップボードにコピーしました！</p>}
+              </div>
 
               <button
                 onClick={onClose}

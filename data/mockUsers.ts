@@ -3,6 +3,7 @@ import { UserProfile } from '@/types/user';
 export const INITIAL_MOCK_USERS: UserProfile[] = [
   {
     id: 'user-1',
+    userCode: '#PPT-1048-2039',
     nickname: 'みさき',
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80',
     age: 23,
@@ -20,6 +21,7 @@ export const INITIAL_MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user-2',
+    userCode: '#PPT-2940-5819',
     nickname: 'りな',
     avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=600&q=80',
     age: 26,
@@ -37,6 +39,7 @@ export const INITIAL_MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user-3',
+    userCode: '#PPT-3819-4028',
     nickname: 'あおい',
     avatar: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=600&q=80',
     age: 22,
@@ -54,6 +57,7 @@ export const INITIAL_MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user-4',
+    userCode: '#PPT-4820-9182',
     nickname: 'エレナ',
     avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=600&q=80',
     age: 28,
@@ -71,6 +75,7 @@ export const INITIAL_MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user-5',
+    userCode: '#PPT-5910-3819',
     nickname: 'ゆきこ',
     avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=600&q=80',
     age: 25,
@@ -88,6 +93,7 @@ export const INITIAL_MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user-6',
+    userCode: '#PPT-6829-1940',
     nickname: 'かりん',
     avatar: 'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?auto=format&fit=crop&w=600&q=80',
     age: 24,
@@ -105,6 +111,7 @@ export const INITIAL_MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user-7',
+    userCode: '#PPT-7193-4820',
     nickname: 'ひなた',
     avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=600&q=80',
     age: 27,
@@ -122,6 +129,7 @@ export const INITIAL_MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user-8',
+    userCode: '#PPT-8392-1048',
     nickname: 'まい',
     avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=600&q=80',
     age: 21,

@@ -2,18 +2,22 @@
 
 import React from 'react';
 import { UserProfile } from '@/types/user';
-import { Sparkles, Heart, UserPlus } from 'lucide-react';
+import { Sparkles, Heart, UserPlus, MessageCircle } from 'lucide-react';
 
 interface HeaderProps {
   currentUser: UserProfile | null;
   onOpenRegister: () => void;
   onOpenMyProfile: () => void;
+  onOpenChat: () => void;
+  unreadCount?: number;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   currentUser,
   onOpenRegister,
   onOpenMyProfile,
+  onOpenChat,
+  unreadCount = 0,
 }) => {
   return (
     <header className="sticky top-0 z-40 backdrop-blur-md bg-white/80 dark:bg-slate-900/80 border-b border-pink-100 dark:border-slate-800 shadow-sm transition-all duration-300">
@@ -22,7 +26,7 @@ export const Header: React.FC<HeaderProps> = ({
         {/* 左側アクション */}
         <div className="hidden md:flex items-center space-x-2 text-xs font-semibold text-pink-600 bg-pink-50 dark:bg-pink-950/40 dark:text-pink-300 px-3 py-1.5 rounded-full border border-pink-200/60 dark:border-pink-800/50 shadow-inner">
           <Heart className="w-3.5 h-3.5 fill-pink-500 text-pink-500 animate-pulse" />
-          <span>登録不要！個人番号ですぐに始められます</span>
+          <span>12時間消滅チャットで安心マッチング</span>
         </div>
 
         {/* 上部中央：アプリ名「ぱぱっと」＆ キャッチコピー */}
@@ -39,8 +43,23 @@ export const Header: React.FC<HeaderProps> = ({
           </p>
         </div>
 
-        {/* 右側：マイページ or プロフィール作成ボタン */}
-        <div className="flex items-center space-x-3">
+        {/* 右側：チャット ＆ マイページ / プロフィール作成ボタン */}
+        <div className="flex items-center space-x-2.5">
+          
+          {/* チャットアイコンボタン */}
+          <button
+            onClick={onOpenChat}
+            className="relative p-2.5 bg-pink-50 dark:bg-slate-800 text-pink-600 dark:text-pink-300 hover:bg-pink-100 rounded-full transition transform hover:scale-105"
+            title="チャット一覧を開く"
+          >
+            <MessageCircle className="w-5 h-5" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-gradient-to-r from-pink-500 to-rose-500 text-white text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow">
+                {unreadCount}
+              </span>
+            )}
+          </button>
+
           {currentUser ? (
             <button
               onClick={onOpenMyProfile}
@@ -62,7 +81,7 @@ export const Header: React.FC<HeaderProps> = ({
               className="flex items-center space-x-1.5 bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white text-xs sm:text-sm font-bold px-4 py-2 rounded-full shadow-lg shadow-pink-500/25 hover:shadow-pink-500/40 transition-all duration-200 transform hover:scale-105 active:scale-95 animate-pulse"
             >
               <UserPlus className="w-4 h-4" />
-              <span>プロフィール作成 (即時番号発行)</span>
+              <span>プロフィール作成 (無料)</span>
             </button>
           )}
         </div>

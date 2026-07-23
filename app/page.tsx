@@ -2,13 +2,15 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { UserProfile, SearchFilterState } from '@/types/user';
+import { ChatMessage } from '@/types/chat';
 import { INITIAL_MOCK_USERS } from '@/data/mockUsers';
 import { Header } from '@/components/Header';
 import { SearchFilter } from '@/components/SearchFilter';
 import { UserProfileCard } from '@/components/UserProfileCard';
 import { RegistrationModal } from '@/components/RegistrationModal';
 import { MyProfileModal } from '@/components/MyProfileModal';
-import { Sparkles, UserPlus, Users, SearchX } from 'lucide-react';
+import { ChatModal } from '@/components/ChatModal';
+import { Sparkles, UserPlus, Users, SearchX, Clock } from 'lucide-react';
 
 const INITIAL_FILTER: SearchFilterState = {
   ageMin: 18,
@@ -21,27 +23,114 @@ const INITIAL_FILTER: SearchFilterState = {
   keyword: '',
 };
 
+// 12時間のミリ秒
+const TWELVE_HOURS_MS = 12 * 60 * 60 * 1000;
+
 export default function Home() {
   const [users, setUsers] = useState<UserProfile[]>(INITIAL_MOCK_USERS);
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [filter, setFilter] = useState<SearchFilterState>(INITIAL_FILTER);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
 
   // モーダル開閉ステート
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [isMyProfileOpen, setIsMyProfileOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [activePartner, setActivePartner] = useState<UserProfile | null>(null);
 
-  // LocalStorageから自分のプロフィールを読み込み
+  // LocalStorageから自分のプロフィール ＆ チャット履歴の読み込み
   useEffect(() => {
     try {
-      const saved = localStorage.getItem('papatto_user');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        setCurrentUser(parsed);
+      const savedUser = localStorage.getItem('papatto_user');
+      if (savedUser) {
+        setCurrentUser(JSON.parse(savedUser));
+      }
+
+      const savedMsg = localStorage.getItem('papatto_messages');
+      if (savedMsg) {
+        setMessages(JSON.parse(savedMsg));
+      } else {
+        // 初期デモメッセージ
+        const now = Date.now();
+        const demoMessages: ChatMessage[] = [
+          {
+            id: 'msg-demo-1',
+            senderId: 'user-1', // みさき
+            receiverId: 'user-my-default',
+            content: 'はじめまして！今日これからカフェ行きませんか？☕️',
+            timestamp: now - 30 * 60 * 1000,
+            expiresAt: now - 30 * 60 * 1000 + TWELVE_HOURS_MS,
+          },
+          {
+            id: 'msg-demo-2',
+            senderId: 'user-2', // りな
+            receiverId: 'user-my-default',
+            content: 'こんばんは🍷夜サクッと飲みに行ける人探してます！',
+            timestamp: now - 2 * 60 * 60 * 1000,
+            expiresAt: now - 2 * 60 * 60 * 1000 + TWELVE_HOURS_MS,
+          }
+        ];
+        setMessages(demoMessages);
       }
     } catch {
       // ignore
     }
   }, []);
+
+  // 新規メッセージ送信
+  const handleSendMessage = (receiverId: string, content: string) => {
+    const senderId = currentUser ? currentUser.id : 'user-guest';
+    const now = Date.now();
+
+    const newMsg: ChatMessage = {
+      id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+      senderId,
+      receiverId,
+      content,
+      timestamp: now,
+      expiresAt: now + TWELVE_HOURS_MS, // 12時間後
+    };
+
+    setMessages((prev) => {
+      const updated = [...prev, newMsg];
+      try {
+        localStorage.setItem('papatto_messages', JSON.stringify(updated));
+      } catch {
+        // ignore
+      }
+      return updated;
+    });
+
+    // 擬似返信（2秒後に相手から返信）
+    setTimeout(() => {
+      const replyMsg: ChatMessage = {
+        id: `msg-reply-${Date.now()}`,
+        senderId: receiverId,
+        receiverId: senderId,
+        content: `メッセージありがとうございます！ぱぱっとお会いしたいですね✨`,
+        timestamp: Date.now(),
+        expiresAt: Date.now() + TWELVE_HOURS_MS,
+      };
+      setMessages((prev) => {
+        const updated = [...prev, replyMsg];
+        try {
+          localStorage.setItem('papatto_messages', JSON.stringify(updated));
+        } catch {
+          // ignore
+        }
+        return updated;
+      });
+    }, 2000);
+  };
+
+  // ユーザーカードからチャットを開始する
+  const handleStartChatWithUser = (partner: UserProfile, initialText?: string) => {
+    setActivePartner(partner);
+    setIsChatOpen(true);
+    if (initialText) {
+      handleSendMessage(partner.id, initialText);
+    }
+  };
 
   // プロフィール作成完了時
   const handleRegisterComplete = (newProfile: UserProfile) => {
@@ -64,6 +153,12 @@ export default function Home() {
       // ignore
     }
   };
+
+  // 12時間以内のメッセージから未読カウント等を計算
+  const validMessagesCount = useMemo(() => {
+    const now = Date.now();
+    return messages.filter((m) => m.expiresAt > now).length;
+  }, [messages]);
 
   // フィルター処理
   const filteredUsers = useMemo(() => {
@@ -100,6 +195,8 @@ export default function Home() {
         currentUser={currentUser}
         onOpenRegister={() => setIsRegisterOpen(true)}
         onOpenMyProfile={() => setIsMyProfileOpen(true)}
+        onOpenChat={() => setIsChatOpen(true)}
+        unreadCount={validMessagesCount > 0 ? 1 : 0}
       />
 
       {/* 2. メインコンテンツエリア */}
@@ -110,14 +207,14 @@ export default function Home() {
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 text-white p-6 sm:p-8 shadow-xl shadow-pink-500/15 border border-pink-300/30 animate-fadeIn">
             <div className="relative z-10 max-w-2xl space-y-3">
               <div className="inline-flex items-center space-x-1.5 bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-extrabold">
-                <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
-                <span>面倒な登録なし！個人識別番号が自動発行されます</span>
+                <Clock className="w-3.5 h-3.5 text-yellow-300" />
+                <span>12時間消滅チャット搭載！プライバシー安心</span>
               </div>
               <h2 className="text-2xl sm:text-3xl font-black leading-tight tracking-tight">
                 「ぱぱっと」会いたい人と、すぐに出会えるマッチングサービス
               </h2>
               <p className="text-xs sm:text-sm text-pink-100 font-medium">
-                面倒なSMS・メール等の認証は一切なし！プロフィール（血液型・MBTI・体型・身長・大人あり）を登録するだけで固有の個人識別番号が割り振られ、すぐにスタートできます。
+                メッセージはすべて12時間で自動消滅！面倒なSMS認証なしで個人番号が即時発行され、気兼ねなくやり取りできます。
               </p>
               
               <div className="pt-2">
@@ -162,6 +259,7 @@ export default function Home() {
                 <UserProfileCard
                   key={u.id}
                   user={u}
+                  onStartChat={handleStartChatWithUser}
                 />
               ))}
             </div>
@@ -214,6 +312,18 @@ export default function Home() {
           onUpdateProfile={handleUpdateProfile}
         />
       )}
+
+      {/* 7. 12時間消滅 独立チャットモーダル */}
+      <ChatModal
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+        currentUser={currentUser}
+        allUsers={users}
+        activePartner={activePartner}
+        onSelectPartner={setActivePartner}
+        messages={messages}
+        onSendMessage={handleSendMessage}
+      />
 
     </div>
   );
